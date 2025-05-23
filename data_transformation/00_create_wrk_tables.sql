@@ -1,20 +1,23 @@
--- public.tournaments definition
-DROP TABLE IF EXISTS public.wrk_tournaments;
-CREATE TABLE public.wrk_tournaments (
-  tournament_id varchar NULL,
-  tournament_name varchar NULL,
-  tournament_date timestamp NULL,
-  tournament_organizer varchar NULL,
-  tournament_format varchar NULL,
-  tournament_nb_players int NULL
+-- Suppression des tables si elles existent
+DROP TABLE IF EXISTS wrk_tournaments;
+DROP TABLE IF EXISTS wrk_decklists;
+
+-- Création de la table wrk_tournaments
+CREATE TABLE wrk_tournaments (
+  tournament_id TEXT NULL,
+  tournament_name TEXT NULL,
+  tournament_date TEXT NULL,  -- SQLite stocke les dates en TEXT ou INTEGER
+  tournament_organizer TEXT NULL,
+  tournament_format TEXT NULL,
+  tournament_nb_players INTEGER NULL
 );
 
-DROP TABLE IF EXISTS public.wrk_decklists;
-CREATE TABLE public.wrk_decklists (
-  tournament_id varchar NULL,
-  player_id varchar NULL,
-  card_type varchar NULL,
-  card_name varchar NULL,
-  card_url varchar NULL,
-  card_count int NULL
+-- Création de la table wrk_decklists
+CREATE TABLE wrk_decklists (
+  tournament_id TEXT NULL,
+  player_id TEXT NULL,
+  card_type TEXT NULL,
+  card_name TEXT NULL,
+  card_url TEXT NULL,
+  card_count INTEGER NULL
 );

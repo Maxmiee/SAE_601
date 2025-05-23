@@ -1,67 +1,82 @@
-import psycopg
+import sqlite3
 import os
 import json
 from datetime import datetime
 
-postgres_db=os.environ.get('POSTGRES_DB')
-postgres_user=os.environ.get('POSTGRES_USER')
-postgres_password=os.environ.get('POSTGRES_PASSWORD')
-postgres_host=os.environ.get('POSTGRES_HOST')
-postgres_port=os.environ.get('POSTGRES_PORT')
+# Chemin vers la base SQLite
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
-output_directory = "../data_collection/sample_output"
+# Chemin absolu vers le fichier SQL
+sql_file_path = os.path.join(script_dir, "00_create_wrk_tables.sql")
 
-def get_connection_string():
-  return f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}"
+# Chemin vers la base SQLite (même dossier que le script)
+sqlite_db_path = os.path.join(script_dir, "database.sqlite")
+
+output_directory = "./data_collection/sample_output"
 
 def execute_sql_script(path: str):
-  with psycopg.connect(get_connection_string()) as conn:
-    with conn.cursor() as cur:
-      with open(path) as f:
-        cur.execute(f.read())
+    with sqlite3.connect(sqlite_db_path) as conn:
+        cur = conn.cursor()
+        with open(path) as f:
+            sql = f.read()
+            cur.executescript(sql)
+        conn.commit()
 
 def insert_wrk_tournaments():
-  tournament_data = []
-  for file in os.listdir(output_directory):
-    with open(f"{output_directory}/{file}") as f:
-      tournament = json.load(f)
-      tournament_data.append((
-        tournament['id'], 
-        tournament['name'], 
-        datetime.strptime(tournament['date'], '%Y-%m-%dT%H:%M:%S.000Z'),
-        tournament['organizer'], 
-        tournament['format'], 
-        int(tournament['nb_players'])
-        ))
-  
-  with psycopg.connect(get_connection_string()) as conn:
-    with conn.cursor() as cur:
-      cur.executemany("INSERT INTO public.wrk_tournaments values (%s, %s, %s, %s, %s, %s)", tournament_data)
+    tournament_data = []
+    for file in os.listdir(output_directory):
+        with open(os.path.join(output_directory, file)) as f:
+            tournament = json.load(f)
+            # Convertir la date au format ISO
+            date_str = datetime.strptime(tournament['date'], '%Y-%m-%dT%H:%M:%S.000Z').isoformat()
+            tournament_data.append((
+                tournament['id'], 
+                tournament['name'], 
+                date_str,
+                tournament['organizer'], 
+                tournament['format'], 
+                int(tournament['nb_players'])
+            ))
+    
+    print(tournament_data)
+    with sqlite3.connect(sqlite_db_path) as conn:
+        cur = conn.cursor()
+        cur.executemany(
+            "INSERT INTO wrk_tournaments VALUES (?, ?, ?, ?, ?, ?)", 
+            tournament_data
+        )
+        conn.commit()
 
 def insert_wrk_decklists():
-  decklist_data = []
-  for file in os.listdir(output_directory):
-    with open(f"{output_directory}/{file}") as f:
-      tournament = json.load(f)
-      tournament_id = tournament['id']
-      for player in tournament['players']:
-        player_id = player['id']
-        for card in player['decklist']:
-          decklist_data.append((
-            tournament_id,
-            player_id,
-            card['type'],
-            card['name'],
-            card['url'],
-            int(card['count']),
-          ))
-  
-  with psycopg.connect(get_connection_string()) as conn:
-    with conn.cursor() as cur:
-      cur.executemany("INSERT INTO public.wrk_decklists values (%s, %s, %s, %s, %s, %s)", decklist_data)
+    decklist_data = []
+    for file in os.listdir(output_directory):
+        with open(os.path.join(output_directory, file)) as f:
+            tournament = json.load(f)
+            print(tournament.keys())
+            tournament_id = tournament['id']
+            for player in tournament['players']:
+                player_id = player['id']
+                for card in player['decklist']:
+                    decklist_data.append((
+                        tournament_id,
+                        player_id,
+                        card['type'],
+                        card['name'],
+                        card['url'],
+                        int(card['count']),
+                    ))
+                   
+    with sqlite3.connect(sqlite_db_path) as conn:
+        
+        cur = conn.cursor()
+        cur.executemany(
+            "INSERT INTO wrk_decklists VALUES (?, ?, ?, ?, ?, ?)", 
+            decklist_data
+        )
+        conn.commit()
 
 print("creating work tables")
-execute_sql_script("00_create_wrk_tables.sql")
+execute_sql_script(sql_file_path)
 
 print("insert raw tournament data")
 insert_wrk_tournaments()
@@ -69,5 +84,6 @@ insert_wrk_tournaments()
 print("insert raw decklist data")
 insert_wrk_decklists()
 
+
 print("construct card database")
-execute_sql_script("01_dwh_cards.sql")
+execute_sql_script(sql_file_path)
