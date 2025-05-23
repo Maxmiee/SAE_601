@@ -7,10 +7,11 @@ from datetime import datetime
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Chemin absolu vers le fichier SQL
-sql_file_path = os.path.join(script_dir, "00_create_wrk_tables.sql")
-
+sql_file_path_00 = os.path.join(script_dir, "00_create_wrk_tables.sql")
+sql_file_path_01 = os.path.join(script_dir, "01_dwh_cards.sql")
 # Chemin vers la base SQLite (même dossier que le script)
 sqlite_db_path = os.path.join(script_dir, "database.sqlite")
+print(sqlite_db_path)
 
 output_directory = "./data_collection/sample_output"
 
@@ -27,7 +28,6 @@ def insert_wrk_tournaments():
     for file in os.listdir(output_directory):
         with open(os.path.join(output_directory, file)) as f:
             tournament = json.load(f)
-            # Convertir la date au format ISO
             date_str = datetime.strptime(tournament['date'], '%Y-%m-%dT%H:%M:%S.000Z').isoformat()
             tournament_data.append((
                 tournament['id'], 
@@ -37,22 +37,29 @@ def insert_wrk_tournaments():
                 tournament['format'], 
                 int(tournament['nb_players'])
             ))
+            
     
-    print(tournament_data)
+    
     with sqlite3.connect(sqlite_db_path) as conn:
-        cur = conn.cursor()
-        cur.executemany(
-            "INSERT INTO wrk_tournaments VALUES (?, ?, ?, ?, ?, ?)", 
-            tournament_data
+      cur = conn.cursor()
+      for record in tournament_data:
+        print(record)
+        cur.execute(
+           '''INSERT INTO wrk_tournaments
+          (tournament_id, tournament_name, tournament_date, tournament_organizer, tournament_format, tournament_nb_players)
+
+          VALUES(?,?,?,?,?,?);''', 
+          record
+            
         )
-        conn.commit()
+      conn.commit()
+
 
 def insert_wrk_decklists():
     decklist_data = []
     for file in os.listdir(output_directory):
         with open(os.path.join(output_directory, file)) as f:
             tournament = json.load(f)
-            print(tournament.keys())
             tournament_id = tournament['id']
             for player in tournament['players']:
                 player_id = player['id']
@@ -70,13 +77,19 @@ def insert_wrk_decklists():
         
         cur = conn.cursor()
         cur.executemany(
-            "INSERT INTO wrk_decklists VALUES (?, ?, ?, ?, ?, ?)", 
+           '''INSERT INTO wrk_decklists
+            (tournament_id, player_id, card_type, card_name, card_url, card_count) VALUES (?,?,?,?,?,?)
+            ''',
             decklist_data
+
+            
         )
+        
+
         conn.commit()
 
 print("creating work tables")
-execute_sql_script(sql_file_path)
+execute_sql_script(sql_file_path_00)
 
 print("insert raw tournament data")
 insert_wrk_tournaments()
@@ -86,4 +99,4 @@ insert_wrk_decklists()
 
 
 print("construct card database")
-execute_sql_script(sql_file_path)
+execute_sql_script(sql_file_path_01)

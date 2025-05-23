@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS wrk_decklists;
 CREATE TABLE wrk_tournaments (
   tournament_id TEXT NULL,
   tournament_name TEXT NULL,
-  tournament_date TEXT NULL,  -- SQLite stocke les dates en TEXT ou INTEGER
+  tournament_date TEXT NULL,  
   tournament_organizer TEXT NULL,
   tournament_format TEXT NULL,
   tournament_nb_players INTEGER NULL
