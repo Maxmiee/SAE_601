@@ -9,11 +9,11 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 # Chemin absolu vers le fichier SQL
 sql_file_path_00 = os.path.join(script_dir, "00_create_wrk_tables.sql")
 sql_file_path_01 = os.path.join(script_dir, "01_dwh_cards.sql")
-# Chemin vers la base SQLite (même dossier que le script)
+# Chemin vers la base SQLite
 sqlite_db_path = os.path.join(script_dir, "database.sqlite")
 print(sqlite_db_path)
 
-output_directory = "./data_collection/sample_output"
+output_directory = "./data_collection/output"
 
 def execute_sql_script(path: str):
     with sqlite3.connect(sqlite_db_path) as conn:
@@ -47,10 +47,8 @@ def insert_wrk_tournaments():
         cur.execute(
            '''INSERT INTO wrk_tournaments
           (tournament_id, tournament_name, tournament_date, tournament_organizer, tournament_format, tournament_nb_players)
-
           VALUES(?,?,?,?,?,?);''', 
-          record
-            
+          record   
         )
       conn.commit()
 
@@ -96,7 +94,6 @@ insert_wrk_tournaments()
 
 print("insert raw decklist data")
 insert_wrk_decklists()
-
 
 print("construct card database")
 execute_sql_script(sql_file_path_01)
