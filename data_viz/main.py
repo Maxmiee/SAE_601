@@ -1,3 +1,4 @@
+#python -m streamlit run data_viz\main.py
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -42,18 +43,28 @@ def filter_by_season(df, seasons):
 
 def plot_most_used_cards(stats, seasons):
     filtered = filter_by_season(stats, seasons)
-    top_cards = filtered.groupby(['season', 'card_name'])['total_card_count'].sum().reset_index()
-    top_cards = top_cards.groupby('season').apply(
-        lambda x: x.nlargest(10, 'total_card_count')).reset_index(drop=True)
 
-    fig = px.bar(top_cards,
-                 x='total_card_count', y='card_name', color='season',
-                 orientation='h',
-                 title="Top 10 des cartes les plus utilisées par saison",
-                 labels={'total_card_count': 'Nombre total de cartes utilisées', 'card_name': 'Carte'},
-                 facet_col='season', facet_col_wrap=2,
-                 height=600)
-    fig.update_layout(yaxis={'categoryorder': 'total ascending'})
+    # Sélection des 10 cartes les plus jouées globalement (sur toutes saisons sélectionnées)
+    total_usage = filtered.groupby('card_name')['total_card_count'].sum().reset_index()
+    top_10_cards = total_usage.nlargest(10, 'total_card_count')['card_name']
+
+    # Filtrer les données pour ces cartes
+    top_data = filtered[filtered['card_name'].isin(top_10_cards)]
+
+    # Graphe en courbes
+    fig = px.line(
+        top_data.sort_values('season'),
+        x='season',
+        y='total_card_count',
+        color='card_name',
+        markers=True,
+        title="Évolution des 10 cartes les plus utilisées par saison",
+        labels={
+            'total_card_count': 'Nombre total de cartes utilisées',
+            'season': 'Saison',
+            'card_name': 'Carte'
+        }
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 def plot_highest_winrate_cards(stats, seasons):
