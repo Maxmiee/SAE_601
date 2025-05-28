@@ -260,7 +260,7 @@ async def handle_tournament_standings_page(
     tournament_format: str,
     tournament_nb_players: int):
   
-  output_file = f"output/{tournament_id}.json"
+  output_file = f"data_collection/output/{tournament_id}.json"
   
   print(f"extracting tournament {tournament_id}", end="... ")
 
@@ -307,8 +307,9 @@ async def handle_tournament_list_page(session: aiohttp.ClientSession, sem: async
   soup = await async_soup_from_url(session, sem, url, False)
   
   current_page = int(soup.find("ul", class_="pagination").attrs["data-current"])
-  max_page = int(soup.find("ul", class_="pagination").attrs["data-max"])
-  
+  # max_page = int(soup.find("ul", class_="pagination").attrs["data-max"])
+  max_page = 1
+
   print(f"extracting completed tournaments page {current_page}")
 
   tournament_trs = extract_trs(soup, "completed-tournaments")
