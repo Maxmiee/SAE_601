@@ -391,20 +391,20 @@ def create_resultats_tournois():
 # === Main ===
 
 def main():
-    # print("Création des tables de travail (wrk)...")
-    # execute_sql_script(sql_file_path_00)
+    print("Création des tables de travail (wrk)...")
+    execute_sql_script(sql_file_path_00)
 
-    # print("Insertion des données brutes des tournois...")
-    # insert_wrk_tournaments()
+    print("Insertion des données brutes des tournois...")
+    insert_wrk_tournaments()
 
-    # print("Insertion des données brutes des decklists...")
-    # insert_wrk_decklists()
+    print("Insertion des données brutes des decklists...")
+    insert_wrk_decklists()
 
-    # print("Construction de la base de données des cartes (dwh)...")
-    # execute_sql_script(sql_file_path_01)
+    print("Construction de la base de données des cartes (dwh)...")
+    execute_sql_script(sql_file_path_01)
 
-    # print("Récupération et insertion des données des cartes Pokémon depuis les URLs...")
-    # fetch_and_insert_pokemon_cards()
+    print("Récupération et insertion des données des cartes Pokémon depuis les URLs...")
+    fetch_and_insert_pokemon_cards()
 
     print("Insertion des scores")
     insert_match()
