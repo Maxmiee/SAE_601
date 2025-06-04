@@ -213,7 +213,6 @@ def fetch_and_insert_pokemon_cards():
                 }
 
                 insert_pokemon_card(conn, card_data)
-                print(f"Inséré : {name}")
 
             else:
                 print(f"Erreur HTTP {response.status_code} pour l'URL : {url}")

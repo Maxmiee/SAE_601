@@ -1,5 +1,4 @@
 #python -m streamlit run data_viz\main.py
-#mdp git : MathisRomain69
 import streamlit as st
 import pandas as pd
 import sqlite3
@@ -8,6 +7,8 @@ import plotly.graph_objects as go
 import numpy as np
 
 DB_PATH = "./data_transformation/database.sqlite"
+
+# on récupère les données
 
 def load_data():
     conn = sqlite3.connect(DB_PATH)
@@ -20,17 +21,9 @@ def load_data():
     return decklists, pokemon, matchs, result_tournoi
 
 decklists, pokemon, matchs, result_tournoi = load_data()
-
-
 extensions = pokemon['extension'].dropna().unique()
 
-
-tensions = pokemon['extension'].dropna().unique()
-
 def main():
-    
-    
-
     st.set_page_config(page_title="Pokémon", layout="wide")
 
     st.title("Analyse des decks pokémon")
@@ -38,7 +31,7 @@ def main():
 
     st.title("Scatter plot des decks par extension et winrate")
 
-    
+    #graph1
     df_deck = result_tournoi.dropna(subset=['winrate', 'extension', 'deck'])
 
     col_filters, col_graph  = st.columns([1, 3])
@@ -50,7 +43,7 @@ def main():
         default=extensions
         
         )
-        min_matchs = st.slider("Nombre minimum de matchs pour un deck", 0, 50, 5)
+        min_matchs = st.slider("Nombre minimum de matchs pour un deck", 1, 50, 10)
     
     df_filtré = df_deck[df_deck['extension'].isin(extensions_choisies)]
     df_filtré = df_filtré[df_filtré['nb_match'] >= min_matchs]
@@ -131,9 +124,10 @@ def main():
     
     ########################################################################################################################################
 
+    #graph2
     col_filters_1, col_graph_1  = st.columns([1, 3])
     with col_filters_1:
-        top_n = st.slider("Top ? ", 0, 50, 5)
+        top_n = st.slider("Top de 0 à 20 ", 1, 20, 5)
     
     df_cartes = decklists.merge(
         pokemon[['url', 'extension', 'name']],
@@ -155,21 +149,19 @@ def main():
     df_cartes_agg['pct_usage'] = df_cartes_agg['pct_usage'].round(3)
     
 
-    # 1. Grouper par extension et carte, sommer card_count
     grouped = df_cartes_agg.groupby(['extension', 'name'])['pct_usage'].sum().reset_index()
 
-    # 2. Pour chaque extension, récupérer les top N cartes les plus jouées
     top_per_extension = (
         grouped.sort_values(['extension', 'pct_usage'], ascending=[True, False])
         .groupby('extension')
         .head(top_n)
     )
     print(grouped)
-    # 3. Utiliser ce DataFrame filtré pour tracer le graphique
+   
     fig2 = px.bar(
         top_per_extension,
         x='extension',
-        y='pct_usage',  # ou 'pct_usage' si tu préfères
+        y='pct_usage',
         color='name',
         labels={
             'extension': 'Extension',
@@ -184,6 +176,7 @@ def main():
         xaxis={'categoryorder': 'category ascending'},
         showlegend=False
     )
+
     with col_graph_1:
         st.plotly_chart(fig2, use_container_width=True)
 
