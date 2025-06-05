@@ -307,8 +307,8 @@ async def handle_tournament_list_page(session: aiohttp.ClientSession, sem: async
   soup = await async_soup_from_url(session, sem, url, False)
   
   current_page = int(soup.find("ul", class_="pagination").attrs["data-current"])
-  # max_page = int(soup.find("ul", class_="pagination").attrs["data-max"])
-  max_page = 1
+  max_page = int(soup.find("ul", class_="pagination").attrs["data-max"])
+  
 
   print(f"extracting completed tournaments page {current_page}")
 

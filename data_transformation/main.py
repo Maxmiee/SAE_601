@@ -7,23 +7,23 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-# === Configuration des chemins ===
+# === Path Configuration ===
 
 script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 print(script_dir)
 
-# Fichiers SQL
+# Files SQL
 sql_file_path_00 = os.path.join(script_dir, "data_transformation/00_create_wrk_tables.sql")
 sql_file_path_01 = os.path.join(script_dir, "data_transformation/01_dwh_cards.sql")
 
-# Base SQLite (utilisée dans les deux cas)
+# Base SQLite 
 sqlite_db_path = os.path.join(script_dir, "data_transformation/database.sqlite")
 
-# Répertoire contenant les fichiers JSON de tournois
+# Directory containing tournament JSON files
 output_directory = os.path.join(script_dir, "data_collection", "output")
 
 
-# === Fonctions pour création et insertion données brutes ===
+# === Functions for creating and inserting raw data ===
 
 def execute_sql_script(path: str):
     with sqlite3.connect(sqlite_db_path) as conn:
@@ -95,11 +95,11 @@ def insert_wrk_decklists():
         conn.commit()
 
 
-# === Fonctions pour récupération et insertion des cartes Pokémon ===
+# === Functions for retrieving and inserting Pokémon cards ===
 
 def load_pokemon_card_urls():
     """
-    Charge les URLs distinctes des cartes Pokémon depuis la table wrk_decklists.
+    Loads distinct Pokémon card URLs from the wrk_decklists table.
     """
     conn = sqlite3.connect(sqlite_db_path)
     liens = pd.read_sql_query("SELECT DISTINCT card_url, card_type FROM wrk_decklists;", conn)
@@ -215,9 +215,9 @@ def fetch_and_insert_pokemon_cards():
                 insert_pokemon_card(conn, card_data)
 
             else:
-                print(f"Erreur HTTP {response.status_code} pour l'URL : {url}")
+                print(f"Error HTTP {response.status_code} pour l'URL : {url}")
         except Exception as e:
-            print(f"Erreur lors du traitement de l'URL {url}: {e}")
+            print(f"Error processing URL {url}: {e}")
 
     conn.close()
 
@@ -390,25 +390,25 @@ def create_resultats_tournois():
 # === Main ===
 
 def main():
-    print("Création des tables de travail (wrk)...")
+    print("Creation of work tables (wrk)...")
     execute_sql_script(sql_file_path_00)
 
-    print("Insertion des données brutes des tournois...")
+    print("Inserting raw tournament data...")
     insert_wrk_tournaments()
 
-    print("Insertion des données brutes des decklists...")
+    print("Inserting raw decklist data...")
     insert_wrk_decklists()
 
-    print("Construction de la base de données des cartes (dwh)...")
+    print("Building the map database (dwh)...")
     execute_sql_script(sql_file_path_01)
 
-    print("Récupération et insertion des données des cartes Pokémon depuis les URLs...")
+    print("Retrieving and inserting Pokémon card data from URLs...")
     fetch_and_insert_pokemon_cards()
 
-    print("Insertion des scores")
+    print("Inserting scores")
     insert_match()
 
-    print("Table Final")
+    print("Final Table")
     create_resultats_tournois()
 
 

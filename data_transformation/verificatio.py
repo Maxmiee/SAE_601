@@ -14,16 +14,3 @@ with sqlite3.connect(sqlite_db_path) as conn:
     for row in rows:
         print(row)
     conn.commit()
-
-
-with sqlite3.connect(sqlite_db_path) as conn:
-    cur = conn.cursor()
-    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='wrk_tournaments'")
-    exists = cur.fetchone()
-    print("Table wrk_tournaments existe ?", bool(exists))
-
-    # Affiche la structure de la table
-    cur.execute("PRAGMA table_info(wrk_tournaments)")
-    print("Structure de la table:")
-    for col in cur.fetchall():
-        print(col)
