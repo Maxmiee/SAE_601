@@ -1,3 +1,5 @@
+# How to launch thes application 
+
 Data collection
 
 You need to run the python file main.py present in the folder data_collection.
