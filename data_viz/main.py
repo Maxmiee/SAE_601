@@ -1,4 +1,3 @@
-#python -m streamlit run data_viz\main.py
 import streamlit as st
 import pandas as pd
 import sqlite3
@@ -35,6 +34,18 @@ def main(palette = palette):
     st.set_page_config(page_title="Pokémon", layout="wide")
 
     st.title("Pokemon decks analysis")
+    #KPI : number of decks played, number of cards
+    
+    number_of_decks_played = result_tournoi['deck'].nunique()
+    number_of_cards = pokemon['name'].nunique()
+    number_of_tournaments = decklists['tournament_id'].nunique()
+    st.markdown("### KPIs")
+    st.markdown("<hr>", unsafe_allow_html=True)
+    col1, col2, col3,col4,col5 = st.columns(5)
+    col1.metric(label="Number of Decks Played", value=number_of_decks_played)
+    col2.metric(label="Number of Cards", value=number_of_cards)
+    col3.metric(label="Number of Tournaments", value=number_of_tournaments)
+    st.markdown("<hr>", unsafe_allow_html=True)
 
     # SCATTER PLOT : x = Extension, y = Win rate, Size = Match player
     st.subheader("Winrate for each decks for various extension")
@@ -56,23 +67,63 @@ def main(palette = palette):
         )
         min_matchs = st.slider("Minimal number of match for a deck", 1, 50, 10)
     
-    # Filter the dataset
-    df_filtered = df_deck[df_deck['extension'].isin(extensions_choisies)]
-    df_filtered = df_filtered[df_filtered['nb_match'] >= min_matchs]
+        # Filter the dataset
+        df_filtered_ext = df_deck[df_deck['extension'].isin(extensions_choisies)]
+        df_filtered = df_filtered_ext[df_filtered_ext['nb_match'] >= min_matchs]
 
-    df_grouped = df_filtered.groupby(['deck', 'extension']).agg({
-        'winrate': 'mean',
-        'nb_match': 'sum', 
-    }).reset_index()
+        df_grouped = df_filtered.groupby(['deck', 'extension']).agg({
+            'winrate': 'mean',
+            'nb_match': 'sum', 
+        }).reset_index()
+
+        df_grouped_ext = df_filtered_ext.groupby(['deck', 'extension']).agg({
+            'winrate': 'mean',
+            'nb_match': 'sum', 
+        }).reset_index()
+
+        total_matches = df_filtered_ext['nb_match'].sum()
+        df_filtered_ext = df_grouped_ext[df_grouped_ext['nb_match'] > 0.001 * total_matches]
+        df_top_decks = df_filtered_ext.sort_values(by='winrate', ascending=False).head(10)
+                
+
+        # TABLE WITH THE BEST DECKS
+        df_top_decks = df_top_decks[['deck', 'winrate', 'nb_match', 'extension']]
+        fig_table = go.Figure(data=[go.Table(
+            columnwidth=[20, 200, 20, 20, 20],
+            header=dict(values=['Position', 'Deck', 'Extension', 'Winrate', 'Nb Matchs'],
+                        fill_color='lightblue',
+                        align='left'),
+            cells=dict(values=[
+                [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                df_top_decks['deck'],
+                df_top_decks['extension'],  
+                (df_top_decks['winrate'] * 100).round(2).astype(str) + '%',  
+                df_top_decks['nb_match']
+            ],
+            fill_color='white',
+            align='left'))
+        ])
+        fig_table.update_layout(
+            title={
+                'text': "Top 10 Winrate for each most used decks",
+                'y':0.95,
+                'x':0.5,
+                'xanchor': 'center',
+                'yanchor': 'top',
+                'font': {'size': 20}
+            }
+        )
+    st.plotly_chart(fig_table, use_container_width=True)
+
 
     
     color_map = {ext: palette[i % len(palette)] for i, ext in enumerate(df_grouped['extension'].unique())}
     df_grouped['color'] = df_grouped['extension'].map(color_map)
 
     # Define the size of the dot
-    sizes = np.log10(df_grouped['nb_match'] + 1)
+    sizes = np.log10(df_grouped['nb_match'] + 1) ** 1.75
     max_size = 30
-    sizeref = 2.*sizes.max()/(max_size**1.8)
+    sizeref = 2.*sizes.max()/(max_size**1.95)
 
     # CREATE THE FIGURE
     fig = go.Figure()
